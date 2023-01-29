@@ -6,12 +6,44 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
+    provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id      String @id @default(cuid())
-    title   String
-    content String
+model User {
+    id            BigInt   @id @default(autoincrement())
+    email         String   @unique
+    username      String   @unique
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    points        Point[]  @relation(name: "Points")
+    pointsGiven   Point[]  @relation(name: "PointsGiven")
+    tickets       Ticket[] @relation(name: "Tickets")
+    ticketsIssued Ticket[] @relation(name: "TicketsIssued")
+}
+
+model Point {
+    id         BigInt   @id @default(autoincrement())
+    createdAt  DateTime @default(now())
+    fromUser   User     @relation(name: "PointsGiven", fields: [fromUserId], references: [id])
+    fromUserId BigInt
+    owner      User     @relation(name: "Points", fields: [ownerId], references: [id])
+    ownerId    BigInt
+    amount     Int
+    isUsed     Boolean  @default(false)
+    usedAt     DateTime?
+    useReason  String?
+}
+
+model Ticket {
+    id         BigInt   @id @default(autoincrement())
+    createdAt  DateTime @default(now())
+    issuedBy   User     @relation(name: "TicketsIssued", fields: [issuedById], references: [id])
+    issuedById BigInt
+    owner      User     @relation(name: "Tickets", fields: [ownerId], references: [id])
+    ownerId    BigInt
+    redeemFor  String
+    isRedeemed Boolean  @default(false)
+    redeemedAt DateTime?
+    validUntil DateTime?
 }
